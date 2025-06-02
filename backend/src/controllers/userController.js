@@ -14,6 +14,14 @@ const serializeBigInt = (obj) => {
 // Get all CMS entries
 export const getUsers = async (req, res) => {
   const usersList = await prisma.users.findMany();
+  if (!usersList || usersList.length === 0) {
+    return res.status(404).json({ error: 'No users found' });
+  }
+  // Serialize BigInt values to strings for JSON compatibility
+  // This is necessary because JSON does not support BigInt natively
+  // and Prisma returns BigInt for ID fields.
+  // We convert them to strings before sending the response.
+  // This is a workaround for the JSON serialization issue with BigInt.
   res.json(serializeBigInt(usersList));
 };
 

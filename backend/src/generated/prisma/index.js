@@ -259,7 +259,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/usr/src/app/src/generated/prisma",
+      "value": "C:\\Users\\sidda\\OneDrive\\Desktop\\KDL\\kdl-starter-kit\\backend\\src\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -268,16 +268,24 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "linux-arm64-openssl-3.0.x",
+        "value": "windows",
         "native": true
       },
       {
         "fromEnvVar": null,
         "value": "linux-arm64-openssl-3.0.x"
+      },
+      {
+        "fromEnvVar": null,
+        "value": "windows"
+      },
+      {
+        "fromEnvVar": null,
+        "value": "debian-openssl-3.0.x"
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/usr/src/app/prisma/schema.prisma",
+    "sourceFilePath": "C:\\Users\\sidda\\OneDrive\\Desktop\\KDL\\kdl-starter-kit\\backend\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -299,8 +307,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider      = \"prisma-client-js\"\n  output        = \"../src/generated/prisma\"\n  binaryTargets = [\"native\", \"linux-arm64-openssl-3.0.x\"]\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel cms {\n  id                    BigInt   @id @default(autoincrement())\n  slug                  String\n  parent                String?\n  type                  String?\n  custom_url            String?\n  banner_image          String?\n  banner_image_alt_text String?\n  banner_title          String?\n  banner_tagline        String?\n  short_description     String?\n  content               String?\n  gallery               String?\n  main_menu             Int?\n  top_menu              Int?\n  side_menu             Int?\n  footer_menu           Int?\n  publish               Int?\n  sort                  BigInt?\n  created_at            DateTime @default(now())\n  updated_at            DateTime @default(now())\n\n  seo seo[]\n}\n\nmodel users {\n  id         BigInt   @id @default(autoincrement())\n  name       String\n  mobile     String\n  email      String\n  password   String\n  address    String?\n  created_at DateTime @default(now())\n  updated_at DateTime @default(now())\n}\n\nmodel seo {\n  id              BigInt   @id @default(autoincrement())\n  cms_id          BigInt?\n  seo_title       String?\n  seo_keywords    String?\n  seo_description String?\n  created_at      DateTime @default(now())\n  updated_at      DateTime @default(now())\n\n  cms cms? @relation(fields: [cms_id], references: [id], onDelete: SetNull)\n}\n\nmodel clients {\n  id           BigInt   @id @default(autoincrement())\n  client_name  String\n  email        String\n  mobile       String\n  company_name String?\n  password     String\n  address      String?\n  created_at   DateTime @default(now())\n  updated_at   DateTime @default(now())\n\n  invoices      invoices[]\n  transactions  transactions[]\n  subscriptions subscriptions[]\n}\n\nmodel invoice_details {\n  id         BigInt   @id @default(autoincrement())\n  name       String\n  amount     String\n  created_at DateTime @default(now())\n  updated_at DateTime @default(now())\n\n  invoices invoices[]\n}\n\nmodel invoices {\n  id                 BigInt    @id @default(autoincrement())\n  client_id          BigInt\n  invoice_no         String\n  amount             String?\n  tax                String?\n  gst                String?\n  mail_sent          Int?\n  issue_date         DateTime?\n  due_date           DateTime?\n  payment_status     String?\n  invoice_details_id BigInt\n  created_at         DateTime  @default(now())\n  updated_at         DateTime  @default(now())\n\n  client         clients         @relation(fields: [client_id], references: [id])\n  invoice_detail invoice_details @relation(fields: [invoice_details_id], references: [id])\n  transactions   transactions[]\n}\n\nmodel subscriptions {\n  id          BigInt   @id @default(autoincrement())\n  client_id   BigInt\n  title       String\n  amount      String\n  description String?\n  sub_title   String?\n  created_at  DateTime @default(now())\n  updated_at  DateTime @default(now())\n\n  client clients @relation(fields: [client_id], references: [id])\n}\n\nmodel payment_methods {\n  id                  BigInt   @id @default(autoincrement())\n  payment_method_name String\n  display_name        String\n  slug                String\n  sandbox_key         String?\n  sandbox_secret      String?\n  live_key            String?\n  live_secret         String?\n  publish             Int?\n  sort                BigInt?\n  created_at          DateTime @default(now())\n  updated_at          DateTime @default(now())\n\n  transactions transactions[]\n}\n\nmodel transactions {\n  id                BigInt    @id @default(autoincrement())\n  client_id         BigInt\n  invoice_id        BigInt\n  payment_method_id BigInt?\n  amout             String?\n  payment_status    String?\n  payment_date      DateTime?\n  created_at        DateTime  @default(now())\n  updated_at        DateTime  @default(now())\n\n  client         clients          @relation(fields: [client_id], references: [id])\n  invoice        invoices         @relation(fields: [invoice_id], references: [id])\n  payment_method payment_methods? @relation(fields: [payment_method_id], references: [id])\n}\n\nmodel settings {\n  id         BigInt   @id @default(autoincrement())\n  name       String\n  slug       String\n  value      String?\n  created_at DateTime @default(now())\n  updated_at DateTime @default(now())\n}\n",
-  "inlineSchemaHash": "18ad4cf9b246ad4fdcd0371a6d4a65a97fff100026beb03c361dc10f2da001fc",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider      = \"prisma-client-js\"\n  output        = \"../src/generated/prisma\"\n  binaryTargets = [\"native\", \"linux-arm64-openssl-3.0.x\", \"windows\", \"debian-openssl-3.0.x\"]\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel cms {\n  id                    BigInt   @id @default(autoincrement())\n  slug                  String\n  parent                String?\n  type                  String?\n  custom_url            String?\n  banner_image          String?\n  banner_image_alt_text String?\n  banner_title          String?\n  banner_tagline        String?\n  short_description     String?\n  content               String?\n  gallery               String?\n  main_menu             Int?\n  top_menu              Int?\n  side_menu             Int?\n  footer_menu           Int?\n  publish               Int?\n  sort                  BigInt?\n  created_at            DateTime @default(now())\n  updated_at            DateTime @default(now())\n\n  seo seo[]\n}\n\nmodel users {\n  id         BigInt   @id @default(autoincrement())\n  name       String\n  mobile     String\n  email      String\n  password   String\n  address    String?\n  created_at DateTime @default(now())\n  updated_at DateTime @default(now())\n}\n\nmodel seo {\n  id              BigInt   @id @default(autoincrement())\n  cms_id          BigInt?\n  seo_title       String?\n  seo_keywords    String?\n  seo_description String?\n  created_at      DateTime @default(now())\n  updated_at      DateTime @default(now())\n\n  cms cms? @relation(fields: [cms_id], references: [id], onDelete: SetNull)\n}\n\nmodel clients {\n  id           BigInt   @id @default(autoincrement())\n  client_name  String\n  email        String\n  mobile       String\n  company_name String?\n  password     String\n  address      String?\n  created_at   DateTime @default(now())\n  updated_at   DateTime @default(now())\n\n  invoices      invoices[]\n  transactions  transactions[]\n  subscriptions subscriptions[]\n}\n\nmodel invoice_details {\n  id         BigInt   @id @default(autoincrement())\n  name       String\n  amount     String\n  created_at DateTime @default(now())\n  updated_at DateTime @default(now())\n\n  invoices invoices[]\n}\n\nmodel invoices {\n  id                 BigInt    @id @default(autoincrement())\n  client_id          BigInt\n  invoice_no         String\n  amount             String?\n  tax                String?\n  gst                String?\n  mail_sent          Int?\n  issue_date         DateTime?\n  due_date           DateTime?\n  payment_status     String?\n  invoice_details_id BigInt\n  created_at         DateTime  @default(now())\n  updated_at         DateTime  @default(now())\n\n  client         clients         @relation(fields: [client_id], references: [id])\n  invoice_detail invoice_details @relation(fields: [invoice_details_id], references: [id])\n  transactions   transactions[]\n}\n\nmodel subscriptions {\n  id          BigInt   @id @default(autoincrement())\n  client_id   BigInt\n  title       String\n  amount      String\n  description String?\n  sub_title   String?\n  created_at  DateTime @default(now())\n  updated_at  DateTime @default(now())\n\n  client clients @relation(fields: [client_id], references: [id])\n}\n\nmodel payment_methods {\n  id                  BigInt   @id @default(autoincrement())\n  payment_method_name String\n  display_name        String\n  slug                String\n  sandbox_key         String?\n  sandbox_secret      String?\n  live_key            String?\n  live_secret         String?\n  publish             Int?\n  sort                BigInt?\n  created_at          DateTime @default(now())\n  updated_at          DateTime @default(now())\n\n  transactions transactions[]\n}\n\nmodel transactions {\n  id                BigInt    @id @default(autoincrement())\n  client_id         BigInt\n  invoice_id        BigInt\n  payment_method_id BigInt?\n  amout             String?\n  payment_status    String?\n  payment_date      DateTime?\n  created_at        DateTime  @default(now())\n  updated_at        DateTime  @default(now())\n\n  client         clients          @relation(fields: [client_id], references: [id])\n  invoice        invoices         @relation(fields: [invoice_id], references: [id])\n  payment_method payment_methods? @relation(fields: [payment_method_id], references: [id])\n}\n\nmodel settings {\n  id         BigInt   @id @default(autoincrement())\n  name       String\n  slug       String\n  value      String?\n  created_at DateTime @default(now())\n  updated_at DateTime @default(now())\n}\n",
+  "inlineSchemaHash": "214336d447d5eae7c23ee0f30b39cd1fb737ba3084a81eab2d72858773a047a6",
   "copyEngine": true
 }
 
@@ -339,8 +347,16 @@ exports.PrismaClient = PrismaClient
 Object.assign(exports, Prisma)
 
 // file annotations for bundling tools to include these files
+path.join(__dirname, "query_engine-windows.dll.node");
+path.join(process.cwd(), "src/generated/prisma/query_engine-windows.dll.node")
+
+// file annotations for bundling tools to include these files
 path.join(__dirname, "libquery_engine-linux-arm64-openssl-3.0.x.so.node");
 path.join(process.cwd(), "src/generated/prisma/libquery_engine-linux-arm64-openssl-3.0.x.so.node")
+
+// file annotations for bundling tools to include these files
+path.join(__dirname, "libquery_engine-debian-openssl-3.0.x.so.node");
+path.join(process.cwd(), "src/generated/prisma/libquery_engine-debian-openssl-3.0.x.so.node")
 // file annotations for bundling tools to include these files
 path.join(__dirname, "schema.prisma");
 path.join(process.cwd(), "src/generated/prisma/schema.prisma")
