@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-// No longer need bcryptjs on the frontend for login
-// import bcrypt from 'bcryptjs'; 
+import bcrypt from 'bcryptjs';
 import { useAuthStore } from '../../../stores/authstore'; // adjust path if needed
 
 export default function AdminLogin() {
@@ -12,8 +11,7 @@ export default function AdminLogin() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  // The login function from the store now expects token and user data
-  const { isLoggedIn, login } = useAuthStore(); 
+  const { isLoggedIn, login } = useAuthStore();
 
   // 🔁 Redirect to dashboard if already logged in
   useEffect(() => {
@@ -26,54 +24,42 @@ export default function AdminLogin() {
     e.preventDefault();
     setError('');
 
-    // Remove dummy login and frontend password checking
-    // const DUMMY_EMAIL = 'admin@admin.com';
-    // const DUMMY_PASSWORD = 'admin123';
+    const DUMMY_EMAIL = 'admin@admin.com';
+    const DUMMY_PASSWORD = 'admin123';
 
     try {
-      // if (email === DUMMY_EMAIL && password === DUMMY_PASSWORD) {
-      //   login(); // ✅ Set Zustand login state
-      //   router.push('/admin/dashboard');
-      //   return;
-      // }
+      if (email === DUMMY_EMAIL && password === DUMMY_PASSWORD) {
+        login(); // ✅ Set Zustand login state
+        router.push('/admin/dashboard');
+        return;
+      }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, { // Corrected endpoint
-        method: 'POST',
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+        method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }), // Send email and password
       });
 
-      const data = await response.json();
+      if (!response.ok) throw new Error('Failed to fetch users');
 
-      if (!response.ok) {
-        // Use message from backend if available, otherwise a generic one
-        throw new Error(data.message || 'Login failed. Please check your credentials.');
+      const users = await response.json();
+      const user = users.find((u: any) => u.email === email);
+
+      if (!user) {
+        setError('Email not found');
+        return;
       }
 
-      // Assuming backend sends { message: 'Login successful', token: '...', user: { ... } }
-      if (data.token && data.user) {
-        // Check if the user has the 'admin' role
-        if (data.user.role === 'admin') {
-          // Pass the token and user data to the store's login action
-          login(data.token, data.user); // MODIFIED HERE
-          
-          // localStorage is now handled by the persist middleware in authstore.tsx
-          // localStorage.setItem('authToken', data.token);
-          // localStorage.setItem('authUser', JSON.stringify(data.user));
-          
-          router.push('/admin/dashboard'); // Redirect to dashboard
-        } else {
-          // User is authenticated but not an admin
-          setError('Access denied. You do not have admin privileges.');
-        }
-      } else {
-        // Handle cases where token or user data might be missing even with a 2xx response
-        setError(data.message || 'Login successful, but essential data is missing.');
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        setError('Incorrect password');
+        return;
       }
 
-    } catch (err: any) { // Catch any error
-      setError(err.message || 'An error occurred. Please try again later.');
-      console.error('Login error:', err);
+      login(); // ✅ Set Zustand login state
+      router.push('/admin/dashboard');
+    } catch (err) {
+      setError('An error occurred. Please try again later.');
+      console.error(err);
     }
   };
 
@@ -145,7 +131,7 @@ export default function AdminLogin() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
-                  d="M12 11c0-1.104-.896-2-2-2s-2 .896-2 2 2 4 2 4m2-4c0-1.104-.896-2-2-2s-2 .896-2 2m6 0c0-1.104-.896-2-2-2s-2 .896-2 2m-2 4v3m4-3v3m-8-3v3m8-3v3m-2-9h4a2 2 0 012 2v10a2 2 0 01-2 2h-4"
+                  d="M12 11c0-1.104-.896-2-2-2s-2 .896-2 2 2 4 2 4m2-4c0-1.104-.896-2-2-2s-2 .896-2 2m6 0c0-1.104-.896-2-2-2s-2 .896-2 2m-2 4v3m4-3v3m-8-3v3m8-3v3m-2-9h4a2 2 0 012 2v10a2 2 0 01-2 2h-4m-6 0H6a2 2 0 01-2-2V7a2 2 0 012-2h4"
                 />
               </svg>
             </div>

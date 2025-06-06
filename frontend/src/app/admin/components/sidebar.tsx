@@ -1,3 +1,5 @@
+
+
 'use client';
 
 import React from 'react';
@@ -14,7 +16,7 @@ function Sidebar({ isSidebarExpanded, toggleSidebar }: SidebarProps) {
 
   const menuItems = [
     { name: 'Dashboard', icon: '📊', href: '/admin/dashboard', active: pathname === 'admin/dashboard' },
-    { name: 'User Management', icon: '👥', href: '/admin/users', active: pathname.includes('admin/users') },
+    { name: 'Users', icon: '👥', href: '/admin/users', active: pathname.includes('admin/users') },
     // { name: 'Products', icon: '📦', href: '/admin/products', active: pathname.includes('/admin/products') },
     // { name: 'Orders', icon: '🛒', href: '/dashboard/orders', active: pathname.includes('/dashboard/orders') },
     // { name: 'Analytics', icon: '📈', href: '/dashboard/analytics', active: pathname.includes('/dashboard/analytics') },
