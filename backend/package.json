@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "seed": "node prisma/seeders/userseed.js && node prisma/seeders/cmsseed.js && node prisma/seeders/seoseed.js && node prisma/seeders/clientsseed.js && node prisma/seeders/invoiceseed.js && node prisma/seeders/invoiceDetailsseed.js && node prisma/seeders/subscriptionseed.js && node prisma/seeders/paymentmethodseed.js && node prisma/seeders/transactionseed.js && node prisma/seeders/settingseed.js"
   },
   "keywords": [],
   "author": "",

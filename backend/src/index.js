@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import cookieParser from "cookie-parser"; // Import cookie-parser
 
 import cmsRoutes from "./routes/cmsRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
@@ -14,6 +15,7 @@ import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import paymentMethodRoutes from "./routes/paymentMethodRoutes.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
 import settingRoutes from "./routes/settingRoutes.js";
+import authRoutes from "./routes/authRoutes.js"; // Import authRoutes
 
 dotenv.config();
 
@@ -26,6 +28,7 @@ const __dirname = path.dirname(__filename);
 // Middleware
 app.use(cors());
 app.use(express.json()); // use built-in JSON parser
+app.use(cookieParser()); // Use cookie-parser middleware
 
 // Static file serving for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -35,6 +38,7 @@ app.get("/", (req, res) => {
     res.send("Welcome to the KDL Backend API");
 });
 
+app.use("/api/auth", authRoutes); // Mount authRoutes
 app.use("/api/cms", cmsRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/seo", seoRoutes);

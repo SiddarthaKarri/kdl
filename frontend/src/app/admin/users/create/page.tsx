@@ -3,6 +3,7 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import ProfilePictureUpload from '../components/ProfilePictureUpload';
+import { fetchWithAuth } from '@/lib/fetchWithAuth';
 import {
   Dialog,
   DialogContent,
@@ -18,25 +19,68 @@ export default function CreateUser() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: 'User',
+    role: 'User', // Default role
     password: '',
+    mobile: '', // Added mobile field
+    address: '', // Added address field
   });
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(null);
+    setIsLoading(true);
 
-    const submitData = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      submitData.append(key, value);
-    });
-    if (profilePicture) {
-      submitData.append('profilePicture', profilePicture);
+    if (!formData.name || !formData.email || !formData.role || !formData.mobile) {
+      setError("Please fill in all required fields: Name, Email, Mobile, and Role.");
+      setIsLoading(false);
+      return;
     }
 
-    console.log('Form submitted:', Object.fromEntries(submitData));
-    setShowModal(true); // Show success dialog
+    try {
+      let requestBody: FormData | string;
+      const requestHeaders: HeadersInit = {};
+
+      if (profilePicture) { // If a profile picture is selected
+        const data = new FormData();
+        data.append('name', formData.name);
+        data.append('email', formData.email);
+        data.append('role', formData.role);
+        data.append('password', formData.password);
+        data.append('mobile', formData.mobile);
+        data.append('address', formData.address);
+        data.append('profilePic', profilePicture); // 'profilePic' is the field name for multer
+        requestBody = data;
+        // Do NOT set 'Content-Type' for FormData, fetch API does it automatically with the correct boundary.
+      } else { // If no profile picture, send JSON
+        requestBody = JSON.stringify(formData);
+        requestHeaders['Content-Type'] = 'application/json';
+      }
+
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+        method: 'POST',
+        body: requestBody,
+        headers: requestHeaders, // Pass the conditional headers
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to create user. Check server logs for details.' }));
+        throw new Error(errorData.message || 'Failed to create user.');
+      }
+
+      // const newUser = await response.json(); // You can use newUser if needed
+      console.log('User created successfully');
+      setShowModal(true); 
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred while creating the user.';
+      console.error("Error creating user:", errorMessage);
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -69,6 +113,11 @@ export default function CreateUser() {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-md space-y-6">
+        {error && (
+          <div className="mb-4 text-center text-red-600 bg-red-100 p-3 rounded-md">
+            <p>{error}</p>
+          </div>
+        )}
         <div className="text-center mb-4">
           <ProfilePictureUpload
             name={formData.name || 'New User'}
@@ -105,6 +154,37 @@ export default function CreateUser() {
               value={formData.email}
               onChange={handleChange}
               required
+              className="w-full border border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Mobile */}
+          <div className="md:col-span-6">
+            <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-1">
+              Mobile <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="mobile"
+              name="mobile"
+              value={formData.mobile}
+              onChange={handleChange}
+              required
+              className="w-full border border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Address */}
+          <div className="md:col-span-6">
+            <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+              Address
+            </label>
+            <input
+              type="text"
+              id="address"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
               className="w-full border border-gray-300 rounded-md p-2 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
@@ -153,9 +233,10 @@ export default function CreateUser() {
           </button>
           <button
             type="submit"
-            className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+            className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition disabled:opacity-50"
+            disabled={isLoading}
           >
-            Create User
+            {isLoading ? 'Creating...' : 'Create User'}
           </button>
         </div>
       </form>

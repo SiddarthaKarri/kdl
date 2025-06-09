@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import DefaultAvatar from "./components/DefaultAvatar";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,110 +13,110 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { fetchWithAuth } from "../../../lib/fetchWithAuth";
 
-// Mock data for demonstration
-const users = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john@demo.com",
-    role: "Admin",
-    status: "Active",
-    profilePic: null,
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane@example.com",
-    role: "User",
-    status: "Active",
-    profilePic: null,
-  },
-  {
-    id: 3,
-    name: "Bob Johnson",
-    email: "bob@example.com",
-    role: "User",
-    status: "Inactive",
-    profilePic: null,
-  },
-  {
-    id: 4,
-    name: "Alice Brown",
-    email: "alice@example.com",
-    role: "Admin",
-    status: "Active",
-    profilePic: null,
-  },
-  {
-    id: 5,
-    name: "Charlie Wilson",
-    email: "charlie@example.com",
-    role: "User",
-    status: "Inactive",
-    profilePic: null,
-  },
-  {
-    id: 6,
-    name: "Diana Miller",
-    email: "diana@example.com",
-    role: "User",
-    status: "Active",
-    profilePic: null,
-  },
-  {
-    id: 7,
-    name: "Edward Davis",
-    email: "edward@example.com",
-    role: "Admin",
-    status: "Active",
-    profilePic: null,
-  },
-  {
-    id: 8,
-    name: "Fiona Clark",
-    email: "fiona@example.com",
-    role: "User",
-    status: "Inactive",
-    profilePic: null,
-  },
-];
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  profilePic: string | null;
+}
 
 export default function Users() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<{id: number, name: string} | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const itemsPerPage = 15;
 
-  const handleDeleteClick = (user: {id: number, name: string}) => {
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetchWithAuth(
+          `${process.env.NEXT_PUBLIC_API_URL}/users`
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Fetched data from /users:", data); // Log fetched data
+        let usersFromApi = Array.isArray(data) ? data : data.users || []; // Handle if data is the array directly or nested
+
+        const mappedUsers = usersFromApi.map((u: any) => ({
+          ...u,
+          id: parseInt(u.id, 10), // Parse id to number
+          status: u.status || "Active", // Default status to "Active"
+          profilePic: u.profilePic || null, // Default profilePic to null
+        }));
+
+        console.log("Users to set in state (mapped):", mappedUsers);
+        setUsers(mappedUsers);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("An unknown error occurred");
+        }
+        console.error("Failed to fetch users:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    console.log("Users state updated:", users);
+  }, [users]);
+
+  const handleDeleteClick = (user: User) => {
     setUserToDelete(user);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (userToDelete) {
-      // TODO: Implement actual delete logic here
-      console.log(`Deleting user: ${userToDelete.name}`);
-      // Remove the user from the users array or make an API call
-      setIsDeleteDialogOpen(false);
-      setUserToDelete(null);
+      try {
+        const response = await fetchWithAuth(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/${userToDelete.id}`,
+          {
+            method: "DELETE",
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`Failed to delete user: ${userToDelete.name}`);
+        }
+        console.log(`Deleting user: ${userToDelete.name}`);
+        setUsers((prevUsers) => prevUsers.filter((u) => u.id !== userToDelete.id));
+        setIsDeleteDialogOpen(false);
+        setUserToDelete(null);
+      } catch (err) {
+        console.error("Delete error:", err);
+        setIsDeleteDialogOpen(false);
+        setUserToDelete(null);
+      }
     }
-  };
-
-  const handleDeleteCancel = () => {
-    setIsDeleteDialogOpen(false);
-    setUserToDelete(null);
   };
 
   // Filter users based on search term and filters
   const filteredUsers = useMemo(() => {
+    if (!Array.isArray(users)) {
+      return [];
+    }
     return users.filter((user) => {
       const matchesSearch =
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase());
+        (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (user.email || '').toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesRole = roleFilter === "All" || user.role === roleFilter;
       const matchesStatus =
@@ -124,7 +124,7 @@ export default function Users() {
 
       return matchesSearch && matchesRole && matchesStatus;
     });
-  }, [searchTerm, roleFilter, statusFilter]);
+  }, [users, searchTerm, roleFilter, statusFilter]); // Added users to dependency array
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -132,6 +132,18 @@ export default function Users() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  if (isLoading) {
+    return <div className="p-6 my-6 text-center">Loading users...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 my-6 text-center text-red-500">
+        Error fetching users: {error}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -377,15 +389,15 @@ export default function Users() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="sm:justify-between">
-            <Button 
-              variant="outline" 
-              onClick={handleDeleteCancel}
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
               className="w-full sm:w-auto"
             >
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={handleDeleteConfirm}
               className="w-full sm:w-auto"
             >

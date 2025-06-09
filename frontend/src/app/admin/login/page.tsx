@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import bcrypt from 'bcryptjs';
 import { useAuthStore } from '../../../stores/authstore'; // adjust path if needed
 
 export default function AdminLogin() {
@@ -24,42 +23,37 @@ export default function AdminLogin() {
     e.preventDefault();
     setError('');
 
-    const DUMMY_EMAIL = 'admin@admin.com';
-    const DUMMY_PASSWORD = 'admin123';
+    // Removed DUMMY_EMAIL and DUMMY_PASSWORD checks
 
     try {
-      if (email === DUMMY_EMAIL && password === DUMMY_PASSWORD) {
-        login(); // ✅ Set Zustand login state
-        router.push('/admin/dashboard');
-        return;
-      }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+      // Ensure this URL matches your backend login endpoint
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (!response.ok) throw new Error('Failed to fetch users');
-
-      const users = await response.json();
-      const user = users.find((u: any) => u.email === email);
-
-      if (!user) {
-        setError('Email not found');
-        return;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Login failed. Please check your credentials.' }));
+        throw new Error(errorData.message || 'Login failed. Please check your credentials.');
       }
 
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        setError('Incorrect password');
-        return;
-      }
+      const data = await response.json();
 
-      login(); // ✅ Set Zustand login state
-      router.push('/admin/dashboard');
+      // Ensure your backend returns token, refreshToken, and user object
+      if (data.token && data.refreshToken && data.user) {
+        console.log("Login successful, received tokens and user:", data);
+        login(data.token, data.refreshToken, data.user); // Use data from backend
+        router.replace('/admin/dashboard'); // Redirect to dashboard
+      } else {
+        console.error('Login failed: Missing token, refreshToken, or user in response:', data);
+        throw new Error('Login failed: Invalid data received from server. Please ensure token, refreshToken, and user are provided.');
+      }
     } catch (err) {
-      setError('An error occurred. Please try again later.');
-      console.error(err);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred during login.');
+      console.error('Login error:', err);
     }
   };
 

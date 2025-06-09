@@ -1,5 +1,6 @@
 import { PrismaClient } from '../generated/prisma/index.js';
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
 
 const prisma = new PrismaClient();
 
@@ -44,6 +45,13 @@ export const getUserById = async (req, res) => {
 // Create CMS entry
 export const createUser = async (req, res) => {
   const { password, ...rest } = req.body;
+  let profilePicPath = null;
+
+  if (req.file) {
+    // Construct the URL path for the uploaded file
+    // Assuming your uploads folder is served statically at /uploads
+    profilePicPath = `/uploads/${req.file.filename}`;
+  }
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
@@ -51,12 +59,22 @@ export const createUser = async (req, res) => {
       data: {
         ...rest,
         password: hashedPassword,
+        profilePic: profilePicPath, // Add profilePic path to data
       },
     });
 
     res.status(201).json(serializeBigInt(user));
   } catch (error) {
-    console.error(error);
+    console.error('Error creating user:', error);
+    // If there's an error and a file was uploaded, attempt to delete it
+    if (req.file && profilePicPath) {
+      try {
+        fs.unlinkSync(req.file.path); // req.file.path is the absolute path on the server
+        console.log('Cleaned up uploaded file due to error:', req.file.filename);
+      } catch (cleanupError) {
+        console.error('Error cleaning up file:', cleanupError);
+      }
+    }
     res.status(500).json({ message: 'Error creating user' });
   }
 };
@@ -64,12 +82,47 @@ export const createUser = async (req, res) => {
 // Update CMS entry
 export const updateUser = async (req, res) => {
   const { id } = req.params;
-  const data = req.body;
-  const user = await prisma.users.update({
-    where: { id: BigInt(id) },
-    data,
-  });
-  res.json(serializeBigInt(user));
+  let data = req.body;
+  let profilePicPath = null;
+
+  if (req.file) {
+    profilePicPath = `/uploads/${req.file.filename}`;
+    data = { ...data, profilePic: profilePicPath };
+  }
+
+  try {
+    // If password is provided in the request, hash it
+    if (data.password && data.password.trim() !== '') {
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+      data = { ...data, password: hashedPassword };
+    } else {
+      const { password, ...restOfData } = data; // Use a different name to avoid conflict
+      data = restOfData;
+    }
+
+    const user = await prisma.users.update({
+      where: { id: BigInt(id) },
+      data,
+    });
+    res.json(serializeBigInt(user));
+  } catch (error) {
+    console.error('Error updating user:', error);
+    // If there's an error and a file was uploaded, attempt to delete it
+    if (req.file && profilePicPath) {
+      try {
+        fs.unlinkSync(req.file.path);
+        console.log('Cleaned up uploaded file due to error:', req.file.filename);
+      } catch (cleanupError) {
+        console.error('Error cleaning up file:', cleanupError);
+      }
+    }
+    // Check for specific Prisma errors, like record not found
+    if (error.code === 'P2025') {
+      // Prisma's error code for "Record to update not found."
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(500).json({ message: 'Error updating user' });
+  }
 };
 
 // Delete CMS entry
